@@ -1,25 +1,55 @@
-from pathlib import Path
-
-import joblib
 import streamlit as st
+import joblib
+import pandas as pd
 
-folder = Path(__file__).parent
-
-model = joblib.load(folder / "physics_model.pkl")
-vectorizer = joblib.load(folder / "tfidf_vectorizer.pkl")
+# Load trained model
+model = joblib.load("physics_classifier.joblib")
 
 st.title("Physics Paper Classifier")
 
-abstract = st.text_area("Paste a paper abstract:")
+st.write(
+    "Classify physics research papers using NLP "
+    "and machine learning."
+)
 
-if st.button("Predict"):
+# Display supported categories
+categories = model.named_steps["classifier"].classes_
+
+st.write("Supported categories:")
+st.write(", ".join(categories))
+
+# User enters abstract
+abstract = st.text_area(
+    "Enter a physics paper abstract",
+    height=200
+)
+
+if st.button("Classify"):
+
     if abstract.strip():
-        scores = vectorizer.transform([abstract])
 
-        if scores.nnz == 0:
-            st.warning("No recognised words. Try another abstract.")
-        else:
-            prediction = model.predict(scores)[0]
-            st.success(f"Category: {prediction}")
+        # Predict category
+        prediction = model.predict([abstract])[0]
+
+        # Predict probabilities
+        probabilities = model.predict_proba([abstract])[0]
+
+        st.subheader("Prediction")
+        st.success(prediction)
+
+        # Display probabilities
+        results = pd.DataFrame({
+            "Category": categories,
+            "Probability": probabilities
+        })
+
+        st.subheader("Prediction Probabilities")
+
+        st.dataframe(results, hide_index=True)
+
+        st.bar_chart(
+            results.set_index("Category")
+        )
+
     else:
-        st.warning("Enter an abstract first.")
+        st.warning("Please enter an abstract.")
