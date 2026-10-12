@@ -1,9 +1,11 @@
 import streamlit as st
 import joblib
 import pandas as pd
+from pathlib import Path
 
-# Load trained model
-model = joblib.load("physics_classifier.joblib")
+model_path = Path(__file__).resolve().parent / "physics_classifier.joblib"
+model = joblib.load(model_path)
+
 
 st.title("Physics Paper Classifier")
 
